@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Sign Up | LibraryConnect</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- SUPABASE -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 420px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+  padding: 32px;
+}
+
+.logo {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 16px;
+}
+
+h2 {
+  text-align: center;
+  margin: 0;
+  font-size: 24px;
+}
+
+.sub {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin: 10px 0 24px;
+}
+
+label {
+  font-size: 14px;
+  color: #374151;
+  display: block;
+  margin-top: 14px;
+}
+
+input {
+  width: 100%;
+  padding: 11px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+}
+
+.row {
+  display: flex;
+  gap: 12px;
+}
+
+.row input {
+  flex: 1;
+}
+
+button {
+  width: 100%;
+  margin-top: 22px;
+  padding: 13px;
+  border-radius: 12px;
+  border: none;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.or {
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 18px 0;
+  position: relative;
+}
+
+.or::before,
+.or::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 40%;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.or::before { left: 0; }
+.or::after { right: 0; }
+
+.google {
+  background: white;
+  border: 1px solid #d1d5db;
+  font-weight: 500;
+}
+
+.footer {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 20px;
+}
+
+.footer a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="logo">📚 LibraryConnect</div>
+
+  <h2>Create your account</h2>
+  <div class="sub">
+    Access digital resources, manage book issues, and stay connected with your library services.
+  </div>
+
+  <div class="row">
+    <div>
+      <label>First Name</label>
+      <input type="text" id="firstName" placeholder="First name" />
+    </div>
+    <div>
+      <label>Last Name</label>
+      <input type="text" id="lastName" placeholder="Last name" />
+    </div>
+  </div>
+
+  <label>Email</label>
+  <input type="email" id="email" placeholder="you@example.com" />
+
+  <label>Password</label>
+  <input type="password" id="password" placeholder="••••••••" />
+
+  <label>Confirm Password</label>
+  <input type="password" id="confirmPassword" placeholder="••••••••" />
+
+  <button class="primary" onclick="signup()">Create Account</button>
+
+  <div class="or">OR</div>
+
+  <button type="button" class="google" onclick="signupWithGoogle()">
+    Continue with Google
+  </button>
+
+  <div class="footer">
+    Already have an account? <a href="login.html">Sign in</a>
+  </div>
+</div>
+
+<script>
+/* ---------- SUPABASE SETUP ---------- */
+const SUPABASE_URL = "https://ftdcvcrsklvqiobavptn.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0ZGN2Y3Jza2x2cWlvYmF2cHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyMzU4MjQsImV4cCI6MjA4NDgxMTgyNH0.4aNjC75fUKgNtTbCyDjZUNTU9mkz2msQHvYcLNbNTXk";
+
+const client = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
+);
+
+/* ---------- EMAIL SIGNUP ---------- */
+async function signup() {
+  const firstName = document.getElementById("firstName").value;
+  const lastName = document.getElementById("lastName").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const confirmPassword = document.getElementById("confirmPassword").value;
+
+  if (!firstName || !lastName || !email || !password || !confirmPassword) {
+    alert("Please fill all fields");
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    alert("Passwords do not match");
+    return;
+  }
+
+  const { error } = await client.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: "http://127.0.0.1:5500/web/login.html",
+    data: {
+      first_name: firstName,
+      last_name: lastName
+    }
+  }
+});
+
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  alert("Account created. Please verify your email, then login.");
+  window.location.href = "/web/login.html";
+
+}
+
+/* ---------- GOOGLE SIGNUP ---------- */
+async function signupWithGoogle() {
+  const { error } = await client.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: "http://127.0.0.1:5500/web/login.html"
+    }
+  });
+
+  if (error) {
+    alert(error.message);
+  }
+}
+
+async function handleOAuthUser() {
+  const { data } = await client.auth.getSession();
+  if (!data.session) return;
+
+  const user = data.session.user;
+
+  // Check if user already exists in subscriptions
+  const { data: existing } = await client
+  .from("user_subscriptions")
+  .select("id")
+  .eq("user_id", user.id)
+  .maybeSingle();
+
+
+  if (!existing) {
+    await client.from("user_subscriptions").insert({
+      user_id: user.id,
+      email: user.email,
+      is_paid: false
+    });
+  }
+}
+
+
+</script>
+
+</body>
+</html>

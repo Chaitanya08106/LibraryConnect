@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Login | LibraryConnect</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<!-- Supabase -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card {
+  width: 380px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 25px 60px rgba(0,0,0,0.15);
+  padding: 32px;
+}
+
+.logo {
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 26px;
+}
+
+h2 {
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+.sub {
+  text-align: center;
+  color: #6b7280;
+  font-size: 14px;
+  margin-bottom: 22px;
+}
+
+.tabs {
+  display: flex;
+  background: #f1f5f9;
+  border-radius: 12px;
+  margin-bottom: 22px;
+  padding: 4px;
+}
+
+.tab {
+  flex: 1;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 10px;
+  color: #475569;
+}
+
+.tab.active {
+  background: white;
+  color: #2563eb;
+}
+
+label {
+  font-size: 14px;
+  margin-top: 12px;
+  display: block;
+}
+
+input {
+  width: 100%;
+  padding: 11px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+}
+
+button {
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+}
+
+.primary {
+  background: #2563eb;
+  color: white;
+}
+
+.google {
+  background: white;
+  border: 1px solid #d1d5db;
+}
+
+.or {
+  text-align: center;
+  font-size: 13px;
+  color: #6b7280;
+  margin: 14px 0;
+}
+
+.footer {
+  text-align: center;
+  font-size: 14px;
+  margin-top: 18px;
+}
+
+.footer a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.hidden {
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <div class="logo">📚 LibraryConnect</div>
+  <h2>Welcome back</h2>
+  <div class="sub">Sign in to continue</div>
+
+  <div class="tabs">
+    <div class="tab active" id="userTab">User</div>
+    <div class="tab" id="adminTab">Admin</div>
+  </div>
+
+  <!-- Placeholders added -->
+  <label>Email</label>
+  <input type="email" id="email" placeholder="your@gmail.com" />
+
+  <label>Password</label>
+  <input type="password" id="password" placeholder="••••••••" />
+
+  <button class="primary" id="loginBtn">Sign in</button>
+
+  <div id="googleSection">
+    <div class="or">OR</div>
+    <button class="google" id="googleBtn">Continue with Google</button>
+  </div>
+
+  <div class="footer" id="signupLink">
+    Don’t have an account? <a href="signup.html">Sign up</a>
+  </div>
+</div>
+
+<script>
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  
+const SUPABASE_URL = "https://ftdcvcrsklvqiobavptn.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0ZGN2Y3Jza2x2cWlvYmF2cHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyMzU4MjQsImV4cCI6MjA4NDgxMTgyNH0.4aNjC75fUKgNtTbCyDjZUNTU9mkz2msQHvYcLNbNTXk";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+
+
+
+  let mode = "user";
+
+  const userTab = document.getElementById("userTab");
+  const adminTab = document.getElementById("adminTab");
+  const googleSection = document.getElementById("googleSection");
+  const signupLink = document.getElementById("signupLink");
+
+  userTab.onclick = () => {
+    mode = "user";
+    userTab.classList.add("active");
+    adminTab.classList.remove("active");
+    googleSection.classList.remove("hidden");
+    signupLink.classList.remove("hidden");
+  };
+
+  adminTab.onclick = () => {
+    mode = "admin";
+    adminTab.classList.add("active");
+    userTab.classList.remove("active");
+    googleSection.classList.add("hidden");
+    signupLink.classList.add("hidden");
+  };
+
+// ✅ AUTO REDIRECT IF ALREADY LOGGED IN
+(async () => {
+  const { data } = await sb.auth.getSession();
+
+  if (!data.session) return;
+
+  const email = data.session.user.email;
+
+  // Hard-coded admin
+  if (email === "chaithanya06gutti@gmail.com") {
+    localStorage.setItem("isAdmin", "true");
+    window.location.href = "admin.html";
+    return;
+  }
+
+  // Normal user
+  window.location.href = "user.html";
+})();
+
+
+
+document.getElementById("loginBtn").onclick = async () => {
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
+
+  if (!email || !password) {
+    alert("Please enter email and password");
+    return;
+  }
+
+  /* =========================
+     🔐 HARD-CODED ADMIN LOGIN
+     ========================= */
+  if (
+    email === "chaithanya06gutti@gmail.com" &&
+    password === "chaithu0816"
+  ) {
+    // Optional: store admin flag
+    localStorage.setItem("isAdmin", "true");
+    window.location.href = "admin.html";
+    return;
+  }
+
+  /* =========================
+     👤 NORMAL USER LOGIN
+     ========================= */
+  const { error } = await sb.auth.signInWithPassword({
+    email,
+    password
+  });
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  window.location.href = "user.html";
+};
+
+
+
+  
+
+  /* ---------- GOOGLE LOGIN (USER ONLY) ---------- */
+ document.getElementById("googleBtn").onclick = async () => {
+  await sb.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${window.location.origin}/web/user.html`
+    }
+  });
+};
+
+
+
+});
+</script>
+
+</body>
+</html>

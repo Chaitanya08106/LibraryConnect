@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>User Dashboard | LibraryConnect</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_BpvXoLd-3hM_FSEZl4d5oSbCB5CyWpo&libraries=places"></script>
+
+
+
+
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  display: flex;
+}
+
+/* ================= SIDEBAR ================= */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  padding: 20px;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.logo-icon {
+  width: 44px;
+  height: 44px;
+  background: #2563eb;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.nav a.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* ================= PROFILE ================= */
+.profile {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  gap: 12px;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: #f1f5f9;
+  border: 1px solid #e5e7eb;
+  color: #475569;
+  font-weight: 600;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-info .name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.profile-info .email {
+  font-size: 13px;
+  color: #6b7280;
+  word-break: break-all;
+}
+
+.signout {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #ef4444;
+  cursor: pointer;
+}
+
+/* ================= MAIN ================= */
+.main {
+  flex: 1;
+  padding: 32px 40px;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.page-sub {
+  color: #6b7280;
+  margin-top: 4px;
+}
+
+/* ================= STATS ================= */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-top: 28px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.stat-card p {
+  margin-top: 10px;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+/* ================= RECENTLY READ ================= */
+.recent-section {
+  margin-top: 40px;
+}
+
+.recent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+}
+
+.recent-card {
+  background: white;
+  padding: 12px;
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+
+.recent-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* ================= BOOKS ================= */
+.search input {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  margin-top: 20px;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.filters button {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filters button.active {
+  background: #2563eb;
+  color: white;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.book-card {
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.05);
+}
+
+.book-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.badge.free {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.paid {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* ===== INTERACTIVE EFFECTS (PART 2) ===== */
+.book-card,
+.recent-card {
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.book-card:hover,
+.recent-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 18px 40px rgba(0,0,0,0.12);
+}
+
+.book-card img,
+.recent-card img {
+  transition: transform 0.3s ease;
+}
+
+.book-card:hover img,
+.recent-card:hover img {
+  transform: scale(1.05);
+}
+/* ================= GLOBAL INTERACTION EFFECTS ================= */
+
+/* Smooth default animation */
+* {
+  transition: all 0.25s ease;
+}
+
+/* ===== Sidebar Nav Pop ===== */
+.nav a:hover {
+  transform: translateX(6px);
+  background: #eef2ff;
+}
+
+/* Active nav stronger pop */
+.nav a.active {
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+/* ===== Dashboard Stat Cards Pop ===== */
+.stat-card {
+  cursor: pointer;
+}
+
+.stat-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+}
+
+/* ===== Book Cards Pop ===== */
+.book-card {
+  cursor: pointer;
+}
+
+.book-card:hover {
+  transform: translateY(-8px) scale(1.03);
+  box-shadow: 0 22px 45px rgba(0,0,0,0.15);
+}
+
+/* ===== Recently Read Cards (already there, enhanced) ===== */
+.recent-card {
+  cursor: pointer;
+}
+
+.recent-card:hover {
+  transform: translateY(-8px) scale(1.04);
+  box-shadow: 0 22px 45px rgba(0,0,0,0.15);
+}
+
+/* ===== Image Zoom Effect ===== */
+.book-card img,
+.recent-card img {
+  transition: transform 0.35s ease;
+}
+
+.book-card:hover img,
+.recent-card:hover img {
+  transform: scale(1.08);
+}
+
+/* ===== Button Interaction ===== */
+button {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.35);
+}
+
+button:active {
+  transform: scale(0.96);
+}
+.map-wrapper:target {
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.3);
+}
+
+/* ===== Section Fade-in ===== */
+.section.active {
+  animation: fadeIn 0.45s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== CONTINUE BADGE (ADDED ONLY) ===== */
+.continue-badge {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  background: #2563eb;
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(37,99,235,0.45);
+  z-index: 5;
+}
+
+.map-wrapper {
+  background: white;
+  padding: 14px;
+  border-radius: 22px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  margin-top: 24px;
+}
+
+#map {
+  width: 100%;
+  height: 420px;
+  border-radius: 16px;
+}
+
+/* ===== SPLIT TOP LAYOUT ===== */
+.location-top {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+
+/* RIGHT SIDE CARD */
+.location-side-card {
+  background: #f8fafc;
+  border-radius: 20px;
+  padding: 26px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.location-side-card h4 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 12px 0 8px;
+}
+
+.location-side-card p {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.6;
+}
+
+.side-icon {
+  font-size: 34px;
+}
+
+/* RESPONSIVE (MOBILE) */
+@media (max-width: 900px) {
+  .location-top {
+    grid-template-columns: 1fr;
+  }
+}
+.section {
+  display: none;
+}
+
+.section.active {
+  display: block;
+}
+
+.stat-sub {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+.stat-card {
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">📚</div>
+    <span>LibraryConnect</span>
+  </div>
+
+  <nav class="nav">
+    <a class="active" onclick="showSection('overview', this)">📊 Overview</a>
+    <a onclick="showSection('books', this)">📊 My Books</a>
+    <a onclick="showSection('location', this)">📍 Library Location</a>
+  </nav>
+
+  <div class="profile">
+    <div class="avatar" id="avatar">U</div>
+    <div class="profile-info">
+      <div class="name" id="userName">User</div>
+      <div class="email" id="userEmail">email</div>
+      <div class="signout" onclick="logout()">🚪 Sign out</div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+<section id="overview" class="section active">
+
+  <!-- ✅ STATS GRID (RESTORED PROPERLY) -->
+  <div class="stats">
+
+    <div class="stat-card">
+      <h4>Monthly Goal</h4>
+      <p id="monthReadCount">0 / 5 📚</p>
+      <span id="goalStatus" class="stat-sub">Keep reading</span>
+    </div>
+
+    <div class="stat-card">
+      <h4>Downloads</h4>
+      <p id="downloadCount">0</p>
+    </div>
+
+    <div class="stat-card">
+      <h4>Books Read</h4>
+      <p id="readCount">0</p>
+    </div>
+
+    <div class="stat-card">
+      <h4>This Month</h4>
+      <p id="monthCount">0</p>
+    </div>
+
+  </div>
+
+  <!-- ✅ RECENTLY READ -->
+  <div class="recent-section">
+    <h3>Recently Read</h3>
+    <div id="recentReads" class="recent-grid"></div>
+  </div>
+
+</section>
+
+
+<section id="books" class="section">
+  <div class="page-title">My Books</div>
+
+  <div class="search">
+    <input id="searchInput" placeholder="Search by title..." oninput="renderBooks()" />
+  </div>
+
+  <div class="filters">
+    <button class="active" onclick="setFilter('all', this)">All</button>
+    <button onclick="setFilter('free', this)">Free</button>
+    <button onclick="setFilter('paid', this)">Paid</button>
+  </div>
+
+  <div id="grid" class="grid"></div>
+</section>
+<section id="location" class="section">
+  <div class="page-title">📍 Library Location</div>
+
+  <!-- 🔹 SPLIT TOP AREA -->
+  <div class="location-top">
+
+    <!-- LEFT: LOCATION INFO -->
+    <div class="location-card-ui">
+      <div class="location-title">
+        🏛️ <span id="libName">Library Name</span>
+      </div>
+
+      <div class="location-address">
+        📌 <span id="libAddress">Full address will appear here</span>
+      </div>
+
+      <div class="location-actions">
+        <button class="btn-outline" onclick="focusOnMap()">
+          🚗 Get Directions
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT: EXTRA SPACE FILL (UI PANEL) -->
+    <div class="location-side-card">
+      <div class="side-icon">🗺️</div>
+      <h4>Find your way</h4>
+      <p>
+        Use the map below to locate the library easily and plan your visit.
+      </p>
+    </div>
+
+  </div>
+
+  <!-- 🗺️ MAP FULL WIDTH -->
+  <div class="map-wrapper" id="mapSection">
+    <div id="map"></div>
+  </div>
+</section>
+
+
+
+</div>
+
+
+<script>
+const sb = supabase.createClient(
+  "https://ftdcvcrsklvqiobavptn.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0ZGN2Y3Jza2x2cWlvYmF2cHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyMzU4MjQsImV4cCI6MjA4NDgxMTgyNH0.4aNjC75fUKgNtTbCyDjZUNTU9mkz2msQHvYcLNbNTXk"
+);
+let map, marker;
+
+let userMap = null;
+let userMarker = null;
+
+async function loadLibraryLocation() {
+  const { data, error } = await sb
+    .from("library_locations")
+    .select("*")
+    .eq("is_active", true)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (error || !data) return;
+
+  // 📝 Bind UI text
+  document.getElementById("libName").innerText = data.name;
+  document.getElementById("libAddress").innerText = data.address;
+
+  const mapDiv = document.getElementById("map");
+  const center = { lat: data.latitude, lng: data.longitude };
+
+  // 🧠 Create map ONLY ONCE
+  if (!userMap) {
+    userMap = new google.maps.Map(mapDiv, {
+      zoom: 14,
+      center
+    });
+
+    userMarker = new google.maps.Marker({
+      map: userMap,
+      position: center,
+      animation: google.maps.Animation.DROP
+    });
+  } else {
+    // 🔁 Update existing map
+    userMap.setCenter(center);
+    userMap.setZoom(14);
+    userMarker.setPosition(center);
+  }
+}
+
+let statsChannel = null;
+
+function subscribeToStats(uid) {
+  if (statsChannel) return; // ⛔ prevent duplicate
+
+  statsChannel = sb.channel("user-stats-" + uid)
+    .on(
+      "postgres_changes",
+      {
+        event: "UPDATE",
+        schema: "public",
+        table: "user_stats",
+        filter: `user_id=eq.${uid}`
+      },
+      (payload) => {
+        const s = payload.new;
+        downloadCount.innerText = s.downloads;
+        readCount.innerText = s.books_read;
+        monthCount.innerText = s.downloads;
+
+        downloadCount.innerText = s.downloads;
+        readCount.innerText = s.books_read;
+        monthCount.innerText = s.downloads;
+      }
+    )
+    .subscribe();
+}
+
+
+let books = [];
+let currentFilter = "all";
+let continueIds = [];
+
+async function getUserProfile() {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return null;
+
+  const uid = data.session.user.id;
+
+  const { data: profile, error } = await sb
+    .from("profiles")
+    .select("role, status")
+    .eq("id", uid)
+    .maybeSingle(); // ✅ IMPORTANT
+
+  // ✅ If profile missing, allow user
+  if (error || !profile) {
+    return { role: "user", status: "active" };
+  }
+
+  return profile;
+}
+
+async function loadSubscriptionStatus(uid) {
+  const { data } = await sb
+    .from("user_subscriptions")
+    .select("is_paid")
+    .eq("user_id", uid)
+    .maybeSingle();
+
+  const el = document.getElementById("subStatus");
+  if (!el) return;
+
+  if (data?.is_paid === true) {
+    el.innerText = "PAID ✅";
+    el.style.color = "#16a34a";
+  } else {
+    el.innerText = "FREE ❌";
+    el.style.color = "#dc2626";
+  }
+}
+
+
+
+(async () => {
+  const profile = await getUserProfile();
+  if (!profile) {
+    location.href = "login.html";
+    return;
+  }
+
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return;
+
+  const user = data.session.user;
+
+  userName.innerText = user.user_metadata?.full_name || "Student";
+  userEmail.innerText = user.email;
+  avatar.innerText = user.email[0].toUpperCase();
+
+  loadStats();
+  loadRecentReads();
+  loadMonthlyReads();   // ✅ ADD THIS HERE (CRITICAL)
+
+})();
+
+
+
+
+let subChannel = null;
+
+function subscribeUserSubscription(uid) {
+  if (subChannel) return;
+
+  subChannel = sb.channel("user-sub-" + uid)
+  .on(
+    "postgres_changes",
+    {
+      event: "*",
+      schema: "public",
+      table: "user_subscriptions",
+      filter: `user_id=eq.${uid}`
+    },
+    () => {
+      loadSubscriptionStatus(uid);
+      loadBooks();
+      loadRecentReads();
+    }
+  )
+  .subscribe();
+
+}
+
+async function loadMonthlyReads() {
+  const { data: session } = await sb.auth.getSession();
+  if (!session.session) return;
+
+  const uid = session.session.user.id;
+
+  // 📅 First day of current month
+  const now = new Date();
+  const firstDayOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    1
+  ).toISOString();
+
+  // ✅ Get reads for THIS MONTH
+  const { data, error } = await sb
+    .from("user_reads")
+    .select("book_id")
+    .eq("user_id", uid)
+    .gte("read_at", firstDayOfMonth);
+
+  if (error || !data) return;
+
+  // ✅ COUNT UNIQUE BOOKS
+  const uniqueBooks = new Set(data.map(r => r.book_id));
+  const count = uniqueBooks.size;
+
+  // 🎯 DISPLAY (CAP AT GOAL)
+  const goal = 5;
+  const displayCount = Math.min(count, goal);
+
+  document.getElementById("monthReadCount").innerText =
+    `${displayCount} / ${goal} 📚`;
+
+  const goalText = document.getElementById("goalStatus");
+
+  if (count >= goal) {
+    goalText.innerText = "🎉 Goal achieved";
+    goalText.style.color = "#16a34a";
+  } else {
+    goalText.innerText = `Read ${goal - count} more`;
+    goalText.style.color = "#6b7280";
+  }
+}
+
+
+
+
+function showSection(id, el) {
+  // Hide all sections
+  document.querySelectorAll(".section").forEach(section => {
+    section.classList.remove("active");
+  });
+
+  // Remove active from sidebar
+  document.querySelectorAll(".nav a").forEach(link => {
+    link.classList.remove("active");
+  });
+
+  // Show selected section
+  document.getElementById(id).classList.add("active");
+  el.classList.add("active");
+
+  // Load section-specific data
+  if (id === "books") loadBooks();
+  if (id === "location") {
+    setTimeout(() => loadLibraryLocation(), 300);
+  }
+}
+
+async function loadSubscriptionStatus(uid) {
+  const { data } = await sb
+    .from("user_subscriptions")
+    .select("is_paid")
+    .eq("user_id", uid)
+    .maybeSingle();
+
+  const el = document.getElementById("subStatus");
+  if (!el) return;
+
+  if (data?.is_paid === true) {
+    el.innerText = "PAID ✅";
+    el.style.color = "#16a34a";
+  } else {
+    el.innerText = "FREE ❌";
+    el.style.color = "#dc2626";
+  }
+}
+
+
+
+function setFilter(type, btn) {
+  currentFilter = type;
+  document.querySelectorAll(".filters button").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  renderBooks();
+}
+
+async function loadBooks() {
+  const { data } = await sb.from("books").select("*");
+  books = data || [];
+  renderBooks();
+}
+
+function renderBooks() {
+  const q = searchInput.value.toLowerCase();
+  grid.innerHTML = "";
+
+  books.filter(b =>
+    b.title.toLowerCase().includes(q) &&
+    (currentFilter === "all" || b.access_type === currentFilter)
+  ).forEach(b => {
+    grid.innerHTML += `
+      <div class="book-card" style="position:relative"
+           onclick="openRecent('${b.id}','${b.pdf_url}','${b.access_type}',${b.approved})">
+
+        
+        <img src="${b.cover_image || 'https://via.placeholder.com/200x260'}">
+        <h3>${b.title}</h3>
+        <span class="badge ${b.access_type}">${b.access_type.toUpperCase()}</span>
+      </div>`;
+  });
+}
+
+
+/* ===== PART 1: CLICKABLE RECENT ===== */
+let openLock = false;
+
+async function canAccessBook(book) {
+  // Free books → everyone can access
+  if (book.access_type === "free") return true;
+
+  // Paid but not approved → blocked
+  if (!book.approved) return false;
+
+  // Get current user
+  const { data } = await sb.auth.getSession();
+  if (!data.session) return false;
+
+  const userId = data.session.user.id;
+
+  // Check subscription
+  const { data: sub, error } = await sb
+    .from("user_subscriptions")
+    .select("is_paid")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !sub) return false;
+
+  return sub.is_paid === true;
+}
+
+async function loadSubscriptionStatus(uid) {
+  const { data, error } = await sb
+    .from("user_subscriptions")
+    .select("is_paid")
+    .eq("user_id", uid)
+    .maybeSingle();
+
+  const el = document.getElementById("subscriptionStatus");
+
+  if (error || !data || data.is_paid !== true) {
+    el.innerText = "FREE ❌";
+    el.style.color = "#dc2626";
+  } else {
+    el.innerText = "PAID ✅";
+    el.style.color = "#16a34a";
+  }
+}
+
+
+async function openRecent(bookId, pdfUrl, accessType, approved) {
+  if (openLock) return;
+  openLock = true;
+
+  // Open immediately for better UX
+  const newTab = window.open(pdfUrl, "_blank");
+
+  try {
+    /* ===============================
+       1️⃣ ACCESS VALIDATION
+    =============================== */
+
+    if (accessType === "paid") {
+      if (!approved) {
+        newTab.close();
+        alert("⏳ This book is awaiting admin approval");
+        return;
+      }
+
+      const allowed = await canAccessBook({
+        access_type: accessType,
+        approved
+      });
+
+      if (!allowed) {
+        newTab.close();
+        alert("🔐 Paid subscription required to read this book");
+        return;
+      }
+    }
+
+    /* ===============================
+       2️⃣ GET CURRENT USER
+    =============================== */
+
+    const { data: sessionData } = await sb.auth.getSession();
+    if (!sessionData.session) {
+      newTab.close();
+      return;
+    }
+
+    const uid = sessionData.session.user.id;
+
+    /* ===============================
+       3️⃣ CHECK FIRST-TIME READ
+       (Borrowed + Books Read)
+    =============================== */
+
+    const { data: existingRead } = await sb
+      .from("user_reads")
+      .select("id")
+      .eq("user_id", uid)
+      .eq("book_id", bookId)
+      .limit(1);
+
+    const firstTimeRead = !existingRead || existingRead.length === 0;
+
+    /* ===============================
+       4️⃣ UPSERT READ RECORD
+    =============================== */
+
+    await sb.from("user_reads").upsert({
+      user_id: uid,
+      book_id: bookId,
+      read_at: new Date().toISOString()
+    });
+
+    /* ===============================
+       5️⃣ UPDATE USER STATS
+    =============================== */
+
+    if (firstTimeRead) {
+      // Borrowed + Books Read increase ONCE
+      const { data: stats } = await sb
+  .from("user_stats")
+  .select("borrowed, books_read, downloads")
+  .eq("user_id", uid)
+  .single();
+
+if (stats) {
+  if (firstTimeRead) {
+    await sb.from("user_stats").update({
+      books_read: stats.books_read + 1
+    }).eq("user_id", uid);
+  }
+
+  await sb.from("user_stats").update({
+    downloads: stats.downloads + 1
+  }).eq("user_id", uid);
+}
+
+    }
+
+    /* ===============================
+       6️⃣ REFRESH UI
+    =============================== */
+
+    loadStats();
+    loadRecentReads();
+    loadMonthlyReads();
+
+  } catch (err) {
+    console.error("Open recent error:", err);
+    alert("Something went wrong ❌");
+  } finally {
+    openLock = false;
+  }
+}
+
+
+function focusOnMap() {
+  if (!userMap || !userMarker) return;
+
+  // 🔽 Smooth scroll to map
+  document.getElementById("mapSection").scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
+
+  // 🎯 Zoom & center for directions feel
+  userMap.setZoom(17);
+  userMap.panTo(userMarker.getPosition());
+
+  // ✨ Marker bounce animation
+  userMarker.setAnimation(google.maps.Animation.BOUNCE);
+  setTimeout(() => userMarker.setAnimation(null), 1400);
+}
+
+
+
+async function loadRecentReads() {
+  const { data: session } = await sb.auth.getSession();
+  if (!session.session) return;
+
+  const uid = session.session.user.id;
+
+  // 1️⃣ Get recent read records
+  const { data: reads, error } = await sb
+    .from("user_reads")
+    .select("book_id, read_at")
+    .eq("user_id", uid)
+    .order("read_at", { ascending: false })
+    .limit(20); // fetch more to handle duplicates
+
+  if (error || !reads || reads.length === 0) {
+    recentReads.innerHTML = "<p>No books read yet</p>";
+    return;
+  }
+
+  // 2️⃣ Deduplicate while preserving order
+  const seen = new Set();
+  const orderedBookIds = [];
+
+  for (const r of reads) {
+    if (!seen.has(r.book_id)) {
+      seen.add(r.book_id);
+      orderedBookIds.push(r.book_id);
+    }
+  }
+
+  // Limit to latest 4 UNIQUE books
+  const finalBookIds = orderedBookIds.slice(0, 4);
+
+  // 3️⃣ Fetch book details
+  const { data: booksData } = await sb
+    .from("books")
+    .select("*")
+    .in("id", finalBookIds);
+
+  if (!booksData) return;
+
+  // 4️⃣ Sort books in SAME order as reads
+  const orderedBooks = finalBookIds.map(id =>
+    booksData.find(b => b.id === id)
+  ).filter(Boolean);
+
+  // 5️⃣ Render UI
+  recentReads.innerHTML = "";
+
+  orderedBooks.forEach(b => {
+    recentReads.innerHTML += `
+      <div class="recent-card" style="position:relative"
+           onclick="openRecent('${b.id}','${b.pdf_url}','${b.access_type}',${b.approved})">
+
+        <div class="continue-badge">Continue</div>
+
+        <img src="${b.cover_image || 'https://via.placeholder.com/200x260'}">
+        <h4>${b.title}</h4>
+      </div>`;
+  });
+}
+
+
+
+
+async function loadStats() {
+  const { data: session } = await sb.auth.getSession();
+  if (!session.session) return;
+
+  const uid = session.session.user.id;
+
+  const { data, error } = await sb
+    .from("user_stats")
+    .select("*")
+    .eq("user_id", uid)
+    .single();
+
+  if (error || !data) return;
+
+  downloadCount.innerText = data.downloads;
+readCount.innerText = data.books_read;
+monthCount.innerText = data.downloads;
+
+  downloadCount.innerText = data.downloads;
+  readCount.innerText = data.books_read;
+
+  // Example logic for "This Month"
+  monthCount.innerText = data.downloads;
+}
+
+
+async function logout() {
+  await sb.auth.signOut();
+  location.href = "login.html";
+}
+</script>
+
+</body>
+</html>

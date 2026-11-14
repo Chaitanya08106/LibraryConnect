@@ -1,0 +1,1380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Admin Dashboard | LibraryConnect</title>
+
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC_BpvXoLd-3hM_FSEZl4d5oSbCB5CyWpo&libraries=places"></script>
+
+
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f9fafb;
+  color: #111827;
+  display: flex;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  padding: 20px;
+  position: relative;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 30px;
+}
+
+.logo-icon {
+  width: 44px;
+  height: 44px;
+  background: #2563eb;
+  color: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav a {
+  display: flex;
+  padding: 14px 16px;
+  border-radius: 14px;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 8px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all .25s;
+}
+
+.nav a:hover {
+  transform: translateX(6px);
+  background: #eef2ff;
+}
+
+.nav a.active {
+  background: #2563eb;
+  color: white;
+}
+
+/* SIGN OUT */
+.signout {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 16px;
+}
+
+.signout button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 12px;
+  background: #ef4444;
+  color: white;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 32px 40px;
+}
+
+.section { display: none; }
+.section.active { display: block; }
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+/* STATS */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 20px;
+}
+
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+.stat-card p {
+  font-size: 28px;
+  font-weight: 700;
+}
+.stat-card {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+  animation: cardPop 0.5s ease forwards;
+  transform: scale(0.9);
+  opacity: 0;
+}
+
+.stat-card:nth-child(1){ animation-delay: .1s }
+.stat-card:nth-child(2){ animation-delay: .2s }
+.stat-card:nth-child(3){ animation-delay: .3s }
+.stat-card:nth-child(4){ animation-delay: .4s }
+
+@keyframes cardPop {
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+
+/* UPLOAD / UPDATE CARD */
+.upload-card {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 520px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+.upload-card input,
+.upload-card select {
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+}
+
+.upload-card button {
+  width: 100%;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px,1fr));
+  gap: 20px;
+}
+
+.book-card {
+  background: white;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.05);
+}
+
+.book-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn {
+  flex: 1;
+  padding: 8px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.approve { background:#16a34a; color:white; }
+.update  { background:#2563eb; color:white; }
+.delete  { background:#dc2626; color:white; }
+
+/* CENTER UPDATE */
+.update-wrapper {
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  min-height: calc(100vh - 64px);
+}
+
+.section {
+  display: none;
+  animation: popIn 0.45s ease forwards;
+}
+
+.section.active {
+  display: block;
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  animation: titlePop 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+@keyframes titlePop {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Store Location Pop ===== */
+.location-card {
+  animation: popIn 0.5s ease forwards;
+  transform: translateY(20px) scale(0.97);
+  opacity: 0;
+}
+
+@keyframes popIn {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+/* Store Location Pop Animation */
+.location-card {
+  animation: popIn 0.5s ease forwards;
+  transform: translateY(20px) scale(0.97);
+  opacity: 0;
+}
+
+@keyframes popIn {
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+/* PERFECT CENTER FOR STORE LOCATION */
+#location .update-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 64px);
+}
+
+#location .location-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* CENTER STORE LOCATION WITHOUT BREAKING MAP */
+#location .update-wrapper {
+  align-items: center;
+}
+
+#location .upload-card {
+  margin: 0 auto;
+}
+/* ===== FORCE STORE LOCATION TO CENTER ===== */
+#location {
+  width: 100%;
+}
+
+#location .update-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+#location .upload-card {
+  margin-left: auto;
+  margin-right: auto;
+}
+/* Fine-tune Store Location horizontal position */
+.pac-container {
+  z-index: 9999 !important;
+}
+.quick-insights {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: white;
+  padding: 24px;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(37,99,235,.25);
+  margin-bottom: 30px;
+  animation: fadeUp .6s ease;
+}
+
+.quick-insights h3 {
+  font-size: 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quick-insights ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.quick-insights li {
+  padding: 10px 0;
+  font-size: 15px;
+  opacity: .95;
+}
+@keyframes popCard {
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+}
+
+.nav a span {
+  font-weight: 500;
+}
+/* ===== CENTER ONLY MANAGE LOCATIONS CONTENT ===== */
+#manageLocations .grid {
+  max-width: 900px;
+  margin: 0 auto;       /* centers grid */
+}
+#manageLocations .page-title {
+  text-align: center;
+  margin-bottom: 30px;
+}
+.location-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 40px;
+  align-items: start;
+}
+/* ===== MANAGE LOCATIONS CENTERED GRID ===== */
+/* ===== MANAGE LOCATIONS – PERFECT CENTER GRID ===== */
+#manageLocations {
+  width: 100%;
+}
+
+#manageLocations .locations-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+}
+
+#manageLocations .book-card {
+  padding: 20px;
+  border-radius: 18px;
+}
+/* Push Manage Locations content down slightly */
+#manageLocations {
+  padding-top: 30px;
+}
+
+#manageLocations .locations-grid {
+  margin-top: 30px;
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">📚</div>
+    <span>LibraryConnect</span>
+  </div>
+
+  <nav class="nav">
+  <a class="active" onclick="show('overview',this)">
+    📊 <span>Overview</span>
+  </a>
+
+  <a onclick="show('upload',this)">
+    📤 <span>Upload Book</span>
+  </a>
+
+  <a onclick="show('manage',this)">
+    📚 <span>Manage Books</span>
+  </a>
+
+  <a onclick="show('pending',this)">
+    ⏳ <span>Pending</span>
+  </a>
+
+  <a onclick="show('users', this)">
+    👤 <span>Users</span>
+  </a>
+
+  <a onclick="show('location',this)">
+    📍 <span>Store Location</span>
+  </a>
+  <a onclick="show('manageLocations', this)">
+  📍 <span>Manage Locations</span>
+</a>
+
+</nav>
+
+
+
+  <div class="signout">
+    <button onclick="logout()">Sign Out</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- OVERVIEW -->
+<section id="overview" class="section active">
+
+  <!-- ✅ Quick Insights ONLY for Overview -->
+  <div class="quick-insights">
+    <h3>📊 Quick Insights</h3>
+    <ul>
+      <li>📚 Total books available in library</li>
+      <li>🆓 Free books accessible to all users</li>
+      <li>💰 Paid books require admin approval</li>
+      <li>⏳ Pending books waiting for verification</li>
+    </ul>
+  </div>
+
+  <div class="page-title overview-title">
+    📊 Admin Overview
+    <span>Library performance at a glance</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card"><h4>Total</h4><p id="t1">0</p></div>
+    <div class="stat-card"><h4>Free</h4><p id="t2">0</p></div>
+    <div class="stat-card"><h4>Paid</h4><p id="t3">0</p></div>
+    <div class="stat-card"><h4>Pending</h4><p id="t4">0</p></div>
+  </div>
+
+</section>
+
+
+<!-- PENDING -->
+<section id="pending" class="section">
+  <div class="page-title">Pending Approvals</div>
+  <div id="pendingGrid" class="grid"></div>
+</section>
+
+
+<!-- UPLOAD -->
+<section id="upload" class="section">
+  <div class="page-title">Upload Book</div>
+  <div class="upload-card location-card">
+    <input id="title" placeholder="Book Title">
+    <select id="access">
+      <option value="free">Free</option>
+      <option value="paid">Paid</option>
+    </select>
+
+    <label>Book Cover Image</label>
+    <input type="file" id="cover" accept="image/*">
+
+    <label>Book PDF</label>
+    <input type="file" id="pdf" accept="application/pdf">
+    
+
+    <button onclick="uploadBook()">Upload</button>
+    <p id="msg"></p>
+  </div>
+</section>
+
+<!-- MANAGE -->
+<section id="manage" class="section">
+  <div class="page-title">Manage Books</div>
+  <div id="grid" class="grid"></div>
+</section>
+
+<!-- UPDATE -->
+<section id="updatePanel" class="section">
+  <div class="update-wrapper">
+    <div class="upload-card">
+      <div class="page-title">Update Book</div>
+
+      <input type="hidden" id="updateId">
+
+      <label>Book Title</label>
+      <input id="updateTitle">
+
+      <label>Access Type</label>
+      <select id="updateAccess">
+        <option value="free">Free</option>
+        <option value="paid">Paid</option>
+      </select>
+
+      <label>Current Cover</label>
+      <img id="currentCover" style="width:120px;border-radius:12px">
+
+      <label>Replace Cover (optional)</label>
+      <input type="file" id="updateCover" accept="image/*">
+
+      <label>Current PDF</label>
+      <a id="currentPdf" target="_blank">View PDF</a>
+
+      <label>Replace PDF (optional)</label>
+      <input type="file" id="updatePdf" accept="application/pdf">
+
+      <button onclick="saveUpdate()">Save Changes</button>
+      <button style="background:#6b7280;margin-top:8px"
+              onclick="closeUpdate()">Cancel</button>
+    </div>
+  </div>
+
+</section>
+
+<!-- USERS -->
+<section id="users" class="section">
+  <div class="page-title">User Management</div>
+
+  <div id="usersGrid" class="grid"></div>
+</section>
+
+</div>
+
+<!-- STORE LOCATION -->
+<section id="location" class="section">
+  <div class="update-wrapper">
+
+    <div class="location-center">
+  <div class="page-title" style="text-align:center;">
+    Library Store Location
+  </div>
+
+  <div class="upload-card location-card">
+
+      <label>Library / Branch Name</label>
+      <input id="libName" placeholder="Eg : Central Library">
+
+      <label>Address</label>
+      <input id="libAddress" placeholder="Eg: Block A, Main Campus">
+
+      <button onclick="saveLocation()">Save Location</button>
+      <p id="locMsg"></p>
+
+      <!-- ✅ ADD THIS EXACTLY HERE -->
+      <div id="map" style="
+        width:100%;
+        height:320px;
+        margin-top:20px;
+        border-radius:16px;
+      "></div>
+
+    </div>
+
+  </div>
+
+
+</section>
+<section id="manageLocations" class="section">
+  <div class="page-title">📍 Manage Library Locations</div>
+  <div id="locationsGrid" class="locations-grid"></div>
+</section>
+
+
+
+<script>
+let map, marker, geocoder;
+
+
+
+const sb = supabase.createClient(
+  "https://ftdcvcrsklvqiobavptn.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ0ZGN2Y3Jza2x2cWlvYmF2cHRuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjkyMzU4MjQsImV4cCI6MjA4NDgxMTgyNH0.4aNjC75fUKgNtTbCyDjZUNTU9mkz2msQHvYcLNbNTXk"
+);
+
+
+function logout() {
+  localStorage.removeItem("isAdmin");
+  window.location.href = "login.html";
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // ✅ Allow hard-coded admin
+  if (localStorage.getItem("isAdmin") === "true") {
+    console.log("✅ Admin access granted");
+    return;
+  }
+
+  // 🔐 Otherwise require Supabase session
+  const { data } = await sb.auth.getSession();
+  if (!data.session) {
+    alert("Please login first");
+    window.location.href = "login.html";
+  }
+});
+
+
+
+
+function show(id, el) {
+  document.querySelectorAll('.section').forEach(s =>
+    s.classList.remove('active')
+  );
+
+  document.querySelectorAll('.nav a').forEach(a =>
+    a.classList.remove('active')
+  );
+
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+
+  if (id === "users") loadUsers();
+  if (id === "manageLocations") loadLocations();
+  if (id === "location") setTimeout(() => initMap(), 300);
+}
+
+
+async function uploadBook(){
+  if(!title.value || !cover.files[0] || !pdf.files[0]){
+    alert("Please fill all fields");
+    return;
+  }
+
+  msg.innerText = "Uploading... ⏳";
+
+  const cp = `covers/${Date.now()}_${cover.files[0].name}`;
+  const pp = `pdfs/${Date.now()}_${pdf.files[0].name}`;
+
+  const coverUpload = await sb.storage.from("library-files").upload(cp, cover.files[0]);
+  const pdfUpload = await sb.storage.from("library-files").upload(pp, pdf.files[0]);
+
+  if(coverUpload.error || pdfUpload.error){
+    msg.innerText = "Upload failed ❌";
+    return;
+  }
+
+  const cu = sb.storage.from("library-files").getPublicUrl(cp).data.publicUrl;
+  const pu = sb.storage.from("library-files").getPublicUrl(pp).data.publicUrl;
+
+  await sb.from("books").insert({
+    title: title.value,
+    access_type: access.value,
+    cover_image: cu,
+    pdf_url: pu,
+    approved: access.value === "free"
+  });
+
+  msg.innerText = "Book uploaded successfully ✅";
+
+  // reset form
+  title.value = "";
+  cover.value = "";
+  pdf.value = "";
+
+  loadBooks();
+}
+
+async function deleteBook(bookId) {
+  if (!confirm("Are you sure you want to delete this book?")) return;
+
+  try {
+    await sb
+      .from("books")
+      .delete()
+      .eq("id", bookId);
+
+    alert("✅ Book deleted successfully");
+    loadBooks(); // refresh UI
+
+  } catch (e) {
+    console.error(e);
+    alert("❌ Failed to delete book");
+  }
+}
+
+
+let booksLoading = false;
+
+async function loadBooks() {
+  if (booksLoading) return;
+  booksLoading = true;
+
+  const { data, error } = await sb.from("books").select("*");
+  booksLoading = false;
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  grid.innerHTML = "";
+  pendingGrid.innerHTML = "";
+
+  let freeCount = 0;
+  let paidCount = 0;
+  let pendingCount = 0;
+
+  data.forEach(b => {
+    if (b.access_type === "free") freeCount++;
+    if (b.access_type === "paid") paidCount++;
+    if (b.access_type === "paid" && !b.approved) pendingCount++;
+
+    /* =======================
+       MANAGE BOOKS SECTION
+       ======================= */
+    grid.innerHTML += `
+      <div class="book-card">
+        <img src="${b.cover_image}">
+        <h4>${b.title}</h4>
+        <p>${b.access_type.toUpperCase()} • ${b.approved ? "Approved" : "Pending"}</p>
+
+        <div class="actions">
+          ${
+            b.access_type === "paid" && !b.approved
+              ? `<button class="btn approve"
+                    onclick="approve('${b.id}')">Approve</button>`
+              : ""
+          }
+
+          <button class="btn update"
+            onclick="openUpdate(
+              '${b.id}',
+              '${b.title}',
+              '${b.access_type}',
+              '${b.cover_image}',
+              '${b.pdf_url}'
+            )">
+            Update
+          </button>
+
+          <!-- ✅ FIXED DELETE -->
+          <button class="btn delete"
+            onclick="deleteBook('${b.id}')">
+            Delete
+          </button>
+        </div>
+      </div>
+    `;
+
+    /* =======================
+       PENDING SECTION
+       ======================= */
+    if (b.access_type === "paid" && !b.approved) {
+      pendingGrid.innerHTML += `
+        <div class="book-card">
+          <img src="${b.cover_image}">
+          <h4>${b.title}</h4>
+          <p>PAID • Pending Approval</p>
+
+          <div class="actions">
+            <button class="btn approve"
+              onclick="approve('${b.id}')">
+              Approve
+            </button>
+
+            <!-- ✅ FIXED REJECT -->
+            <button class="btn delete"
+              onclick="deleteBook('${b.id}')">
+              Reject
+            </button>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  // ===== STATS =====
+  t1.innerText = data.length;
+  t2.innerText = freeCount;
+  t3.innerText = paidCount;
+  t4.innerText = pendingCount;
+}
+
+async function approve(id){
+  // ⚡ instant UI feedback
+  document.querySelectorAll(`[onclick*="${id}"]`).forEach(btn => {
+    btn.innerText = "Approved ✅";
+    btn.disabled = true;
+  });
+
+  await sb
+    .from("books")
+    .update({ approved: true })
+    .eq("id", id);
+
+  loadBooks(); // one controlled reload
+}
+
+async function deleteBook(bookId) {
+  const ok = confirm("Are you sure you want to delete this book?");
+  if (!ok) return;
+
+  try {
+    await sb
+      .from("books")
+      .delete()
+      .eq("id", bookId);
+
+    alert("✅ Book deleted successfully");
+    loadBooks(); // refresh UI
+
+  } catch (err) {
+    console.error(err);
+    alert("❌ Failed to delete book");
+  }
+}
+
+
+
+function initMap(lat = 20.5937, lng = 78.9629) {
+  // Initialize geocoder
+  geocoder = new google.maps.Geocoder();
+
+  // Create map
+  map = new google.maps.Map(document.getElementById("map"), {
+    zoom: 6,
+    center: { lat, lng }
+  });
+
+  // Create marker
+  marker = new google.maps.Marker({
+    map: map,
+    position: { lat, lng }
+  });
+
+  /* ===============================
+     1️⃣ CLICK ON MAP → ADDRESS FILL
+     =============================== */
+  map.addListener("click", (e) => {
+    const clickedLatLng = e.latLng;
+
+    marker.setPosition(clickedLatLng);
+    map.setCenter(clickedLatLng);
+
+    geocoder.geocode({ location: clickedLatLng }, (results, status) => {
+      if (status === "OK" && results[0]) {
+        libAddress.value = results[0].formatted_address;
+      } else {
+        locMsg.innerText = "Unable to fetch address ❌";
+      }
+    });
+  });
+
+  /* ===============================
+     2️⃣ AUTOCOMPLETE – ADDRESS
+     =============================== */
+  const addressAutocomplete = new google.maps.places.Autocomplete(
+    libAddress,
+    { types: ["geocode"] }
+  );
+
+  addressAutocomplete.addListener("place_changed", () => {
+    const place = addressAutocomplete.getPlace();
+    if (!place.geometry) return;
+
+    const location = place.geometry.location;
+    map.setCenter(location);
+    map.setZoom(15);
+    marker.setPosition(location);
+
+    libAddress.value = place.formatted_address;
+  });
+
+  /* ===============================
+     3️⃣ AUTOCOMPLETE – LIBRARY NAME
+     =============================== */
+  const libraryAutocomplete = new google.maps.places.Autocomplete(
+    libName,
+    { types: ["establishment"] }
+  );
+
+  libraryAutocomplete.addListener("place_changed", () => {
+    const place = libraryAutocomplete.getPlace();
+    if (!place.geometry) return;
+
+    const location = place.geometry.location;
+    map.setCenter(location);
+    map.setZoom(15);
+    marker.setPosition(location);
+
+    if (place.formatted_address) {
+      libAddress.value = place.formatted_address;
+    }
+  });
+}
+
+let adminRealtime = null;
+
+function subscribeAdminRealtime() {
+  if (adminRealtime) return;
+
+  adminRealtime = sb.channel("admin-realtime")
+
+    // 🔁 User subscriptions (PAID / FREE)
+    .on("postgres_changes",
+  { event: "INSERT", schema: "public", table: "books" },
+  () => loadBooks()
+)
+.on("postgres_changes",
+  { event: "UPDATE", schema: "public", table: "books" },
+  () => loadBooks()
+)
+
+    // 🔁 Books (approve / delete / upload)
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "books" },
+      () => {
+        console.log("🔄 Books updated");
+        loadBooks();
+      }
+    )
+
+    // 🔁 Library locations
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "library_locations" },
+      () => {
+        console.log("🔄 Locations updated");
+        if (document.getElementById("manageLocations")?.classList.contains("active")) {
+          loadLocations();
+        }
+      }
+    )
+
+    .subscribe();
+}
+subscribeAdminRealtime();
+
+
+
+function openUpdate(id,title,access,cover,pdf){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  updatePanel.classList.add('active');
+
+  updateId.value=id;
+  updateTitle.value=title;
+  updateAccess.value=access;
+  currentCover.src=cover;
+  currentPdf.href=pdf;
+}
+
+async function saveUpdate(){
+  let upd={
+    title:updateTitle.value,
+    access_type:updateAccess.value
+  };
+
+  if(updateCover.files[0]){
+    const cp=`covers/${Date.now()}_${updateCover.files[0].name}`;
+    await sb.storage.from("library-files").upload(cp,updateCover.files[0]);
+    upd.cover_image=sb.storage.from("library-files").getPublicUrl(cp).data.publicUrl;
+  }
+
+  if(updatePdf.files[0]){
+    const pp=`pdfs/${Date.now()}_${updatePdf.files[0].name}`;
+    await sb.storage.from("library-files").upload(pp,updatePdf.files[0]);
+    upd.pdf_url=sb.storage.from("library-files").getPublicUrl(pp).data.publicUrl;
+  }
+
+  await sb.from("books").update(upd).eq("id",updateId.value);
+  closeUpdate();
+  loadBooks();
+}
+
+function closeUpdate(){
+  updatePanel.classList.remove('active');
+  manage.classList.add('active');
+  updateCover.value="";
+  updatePdf.value="";
+}
+function getLatLng(address) {
+  return new Promise((resolve, reject) => {
+    geocoder.geocode({ address }, (results, status) => {
+      if (status === "OK") {
+        resolve(results[0].geometry.location);
+      } else {
+        reject();
+      }
+    });
+  });
+}
+
+let editingLocationId = null;
+
+async function saveLocation() {
+  if (!libName.value || !libAddress.value) {
+    locMsg.innerText = "Library name and address required";
+    return;
+  }
+
+  try {
+    const geo = await getLatLng(libAddress.value);
+
+    const payload = {
+      name: libName.value,
+      address: libAddress.value,
+      latitude: geo.lat(),
+      longitude: geo.lng()
+    };
+
+    if (editingLocationId) {
+      // 🔁 UPDATE existing location
+      await sb
+        .from("library_locations")
+        .update(payload)
+        .eq("id", editingLocationId);
+
+      locMsg.innerText = "Location updated successfully ✅";
+      editingLocationId = null;
+
+    } else {
+      // ➕ INSERT new location
+      await sb
+        .from("library_locations")
+        .insert(payload);
+
+      locMsg.innerText = "Location added successfully ✅";
+    }
+
+    // Reset form
+    libName.value = "";
+    libAddress.value = "";
+
+    // Reload Manage Locations list
+    loadLocations();
+
+    // Go back to Manage Locations tab
+    show("manageLocations", document.querySelector('[onclick*="manageLocations"]'));
+
+  } catch (e) {
+    console.error(e);
+    locMsg.innerText = "Invalid address ❌";
+  }
+}
+
+// ✏️ TYPE ADDRESS → MAP MOVES (FORWARD GEOCODING)
+libAddress.addEventListener("change", async () => {
+  if (!libAddress.value) return;
+  if (!map) initMap();
+
+  try {
+    const location = await getLatLng(libAddress.value);
+    map.setCenter(location);
+    map.setZoom(15);
+    marker.setPosition(location);
+  } catch (e) {
+    locMsg.innerText = "Location not found ❌";
+  }
+});
+// 🏛️ TYPE LIBRARY NAME → MAP MOVES
+libName.addEventListener("change", async () => {
+  if (!libName.value) return;
+  if (!map) initMap();
+
+  // Build a smart search query
+  const query = libAddress.value
+    ? `${libName.value}, ${libAddress.value}`
+    : `${libName.value}, India`;
+
+  try {
+    const location = await getLatLng(query);
+    map.setCenter(location);
+    map.setZoom(15);
+    marker.setPosition(location);
+  } catch (e) {
+    locMsg.innerText = "Library location not found ❌";
+  }
+});
+
+// 🔁 Move map automatically when address changes
+libAddress.addEventListener("change", async () => {
+  if (!libAddress.value) return;
+  if (!map) initMap();
+
+  try {
+    const location = await getLatLng(libAddress.value);
+    map.setCenter(location);
+    map.setZoom(15);
+    marker.setPosition(location);
+  } catch (e) {
+    locMsg.innerText = "Location not found ❌";
+  }
+});
+
+async function canAccessBook(book) {
+  // Free books → everyone can access
+  if (book.access_type === "free") return true;
+
+  // Paid book but not approved → no one can access
+  if (!book.approved) return false;
+
+  // 🔑 Get current logged-in user
+  const { data: sessionData } = await sb.auth.getSession();
+  if (!sessionData.session) return false;
+
+  const userId = sessionData.session.user.id;
+
+  // 🔍 Check subscription status
+  const { data, error } = await sb
+    .from("user_subscriptions")
+    .select("is_paid")
+    .eq("user_id", userId)
+    .single();
+
+  if (error || !data) return false;
+
+  return data.is_paid === true;
+}
+
+// ================= USERS MANAGEMENT =================
+
+async function loadUsers() {
+  const usersGrid = document.getElementById("usersGrid");
+
+  // 1️⃣ Load ALL users
+  const { data: profiles, error: profErr } = await sb
+    .from("profiles")
+    .select("id, email")
+    .order("created_at", { ascending: false });
+
+  if (profErr) {
+    console.error(profErr);
+    alert("Failed to load users");
+    return;
+  }
+
+  // 2️⃣ Load subscriptions
+  const { data: subs, error: subErr } = await sb
+    .from("user_subscriptions")
+    .select("user_id, is_paid");
+
+  if (subErr) {
+    console.error(subErr);
+    alert("Failed to load subscriptions");
+    return;
+  }
+
+  // 3️⃣ Map subscriptions by user_id
+  const subMap = {};
+  subs.forEach(s => {
+    subMap[s.user_id] = s.is_paid;
+  });
+
+  usersGrid.innerHTML = "";
+
+  // 4️⃣ Render ALL users
+  profiles.forEach(u => {
+    const isPaid = subMap[u.id] === true;
+
+    usersGrid.innerHTML += `
+      <div class="book-card">
+        <h4>${u.email}</h4>
+        <p>Status: ${isPaid ? "PAID ✅" : "FREE ❌"}</p>
+        <button class="btn approve"
+          onclick="togglePaid('${u.id}', ${!isPaid})">
+          ${isPaid ? "Revoke Paid Access" : "Grant Paid Access"}
+        </button>
+      </div>
+    `;
+  });
+}
+
+async function togglePaid(userId, status) {
+  const { error } = await sb
+    .from("user_subscriptions")
+    .upsert(
+      { user_id: userId, is_paid: status },
+      { onConflict: "user_id" }
+    );
+
+  if (error) {
+    console.error(error);
+    alert("Failed to update access");
+    return;
+  }
+
+  loadUsers();
+}
+
+
+
+
+
+
+async function loadLocations() {
+  const { data, error } = await sb
+    .from("library_locations")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error(error);
+    alert("Failed to load locations");
+    return;
+  }
+
+  const grid = document.getElementById("locationsGrid");
+  grid.innerHTML = "";
+
+  if (!data || data.length === 0) {
+    grid.innerHTML = "<p>No locations found</p>";
+    return;
+  }
+
+  data.forEach(loc => {
+    grid.innerHTML += `
+      <div class="book-card">
+        <h4>🏛️ ${loc.name}</h4>
+
+        <p style="font-size:14px;color:#6b7280;">
+          📌 ${loc.address}
+        </p>
+
+        <p>
+          Status:
+          <strong style="color:${loc.is_active ? '#16a34a' : '#dc2626'}">
+            ${loc.is_active ? "ACTIVE" : "INACTIVE"}
+          </strong>
+        </p>
+
+        <div class="actions">
+
+          <button class="btn update"
+            onclick="editLocation('${loc.id}')">
+            Update
+          </button>
+
+          <button class="btn approve"
+            onclick="toggleLocation('${loc.id}', ${!loc.is_active}, this)">
+            ${loc.is_active ? "Deactivate" : "Activate"}
+          </button>
+
+          <button class="btn delete"
+            onclick="deleteLocation('${loc.id}', this)">
+            Delete
+          </button>
+
+        </div>
+      </div>
+    `;
+  });
+}
+
+
+async function deleteLocation(id, btn) {
+  if (!confirm("Delete this location?")) return;
+
+  const card = btn.closest(".book-card");
+  card.style.opacity = "0.5";
+  card.style.pointerEvents = "none";
+
+  try {
+    await sb
+      .from("library_locations")
+      .delete()
+      .eq("id", id);
+
+    card.remove(); // ⚡ instant UI
+
+  } catch (e) {
+    alert("Delete failed ❌");
+    card.style.opacity = "1";
+    card.style.pointerEvents = "auto";
+  }
+}
+
+async function toggleLocation(id, status, btn) {
+  btn.disabled = true;
+  btn.innerText = status ? "Activating..." : "Deactivating...";
+
+  try {
+    if (status === true) {
+      await sb
+        .from("library_locations")
+        .update({ is_active: false })
+        .neq("id", id);
+    }
+
+    await sb
+      .from("library_locations")
+      .update({ is_active: status })
+      .eq("id", id);
+
+    loadLocations();
+
+  } catch (e) {
+    alert("Action failed ❌");
+    btn.disabled = false;
+    btn.innerText = status ? "Activate" : "Deactivate";
+  }
+}
+
+async function editLocation(id) {
+  const { data, error } = await sb
+    .from("library_locations")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return;
+
+  // Switch to Store Location tab
+  show("location", document.querySelector('[onclick*="location"]'));
+
+  // Fill form
+  libName.value = data.name;
+  libAddress.value = data.address;
+
+  editingLocationId = id;
+}
+
+
+loadBooks();
+</script>
+
+</body>
+</html>
